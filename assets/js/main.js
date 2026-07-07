@@ -2,7 +2,7 @@
 // Framework-free ES module. Everything runs client-side; no photo ever leaves
 // the browser.
 
-import { DEFAULT_LAYOUT, renderFrame } from "./align.js";
+import { DEFAULT_LAYOUT, renderFrame, renderPileFrame } from "./align.js";
 import { canRecord, recordAnimation } from "./recorder.js";
 
 // ---------------------------------------------------------------------------
@@ -383,9 +383,24 @@ function dealAngleFor(photo) {
 }
 
 function rebuildFrames() {
-  state.frames = markedPhotos().map((p) =>
-    renderFrame(p.img, p.leftEye, p.rightEye, state.layout, dealAngleFor(p))
-  );
+  const photos = markedPhotos();
+  if (state.pile) {
+    // Pile mode: every frame shows all photos stacked as tilted prints, with a
+    // different one brought to the top of the pile each frame.
+    const prints = photos.map((p) => ({
+      image: p.img,
+      leftEye: p.leftEye,
+      rightEye: p.rightEye,
+      dealAngle: dealAngleFor(p),
+    }));
+    state.frames = photos.map((_, top) =>
+      renderPileFrame(prints, top, state.layout)
+    );
+  } else {
+    state.frames = photos.map((p) =>
+      renderFrame(p.img, p.leftEye, p.rightEye, state.layout)
+    );
+  }
   if (state.previewIndex >= state.frames.length) state.previewIndex = 0;
 
   const preview = els["preview-canvas"];
