@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Enhancements — Face Animation</title>
+    <meta
+      name="description"
+      content="Ideas for future improvements to Face Animation — features, usability, performance, and accessibility enhancements under consideration."
+    />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="stylesheet" href="/assets/css/app.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">
+        <img src="/assets/favicon.svg" alt="" width="24" height="24" />
+        <span>Face Animation</span>
+      </a>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/about/">About</a>
+      </nav>
+    </header>
+
+    <main class="prose">
+      <h1>Enhancements</h1>
+      <p>
+        A running list of potential improvements to <strong>Face Animation</strong>.
+        These are ideas under consideration — none are promises — collected to
+        shape where the project could go next. Each keeps the site's core
+        principle intact: everything runs in your browser and your photos never
+        leave your device.
+      </p>
+
+      <ol>
+        <li>
+          <strong>Automatic eye detection.</strong> Offer optional in-browser
+          face/eye detection (e.g. the FaceDetector API or a small WASM model)
+          to pre-place the eye markers, with manual tweaking still available for
+          accuracy.
+        </li>
+        <li>
+          <strong>Save and resume projects.</strong> Persist the photo order,
+          eye markers, and settings to local storage or a downloadable project
+          file so a session can be reopened later without re-marking everything.
+        </li>
+        <li>
+          <strong>Drag-to-reorder photos.</strong> Let users rearrange the photo
+          strip by dragging, plus quick "sort by filename" and "sort by date
+          taken" (EXIF) options for a natural chronological flow.
+        </li>
+        <li>
+          <strong>Crossfade and morph transitions.</strong> Add an option to
+          blend between aligned frames instead of hard cuts, producing the
+          smoother "aging timelapse" look many users expect.
+        </li>
+        <li>
+          <strong>Animated GIF export.</strong> Provide a GIF option alongside
+          the current MP4/WebM video export, for easy sharing on platforms that
+          prefer GIFs.
+        </li>
+        <li>
+          <strong>Per-frame timing control.</strong> Allow individual frames to
+          be held longer (e.g. emphasise a key photo) rather than a single global
+          speed for the whole animation.
+        </li>
+        <li>
+          <strong>Adjustable output resolution.</strong> Add presets and a custom
+          size field (e.g. 1080×1080, 1080×1920 for stories) so exports fit the
+          target platform.
+        </li>
+        <li>
+          <strong>Onion-skin alignment guide.</strong> While marking eyes, show a
+          faint overlay of the previous frame so it is easier to keep faces
+          consistently positioned.
+        </li>
+        <li>
+          <strong>Keyboard shortcuts.</strong> Support keys for next/previous
+          photo, play/pause, and nudging eye markers by a pixel for precise,
+          mouse-free editing.
+        </li>
+        <li>
+          <strong>Improved accessibility.</strong> Audit and strengthen ARIA
+          labels, focus order, and keyboard operability of the canvas marking
+          step, and respect <code>prefers-reduced-motion</code> in the preview.
+        </li>
+        <li>
+          <strong>Optional watermark or caption.</strong> Let users overlay a
+          date, name, or small caption on each frame — useful for
+          "one photo a day" and progress videos.
+        </li>
+        <li>
+          <strong>Batch alignment preview.</strong> Show all aligned frames as a
+          contact-sheet grid so misaligned photos can be spotted and re-marked at
+          a glance.
+        </li>
+      </ol>
+
+      <p>
+        Have an idea that isn't here? Suggestions and pull requests are welcome
+        on the project's GitHub repository.
+      </p>
+
+      <p><a href="/">← Back to the app</a></p>
+    </main>
+
+    <footer class="site-footer">
+      <p class="muted small">
+        Runs entirely in your browser. No photos are uploaded.
+        <a href="/about/">How it works</a>
+      </p>
+    </footer>
+  </body>
+</html>
