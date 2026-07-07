@@ -1,17 +1,155 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>Home</title>
-    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/css/styles.css">
-    <script defer src="/assets/js/main.js"></script>
+    <title>Face Animation — align faces by the eyes</title>
+    <meta
+      name="description"
+      content="Turn a set of face photos into a smooth animation, aligned so the eyes stay level and in the same position. Runs entirely in your browser — no uploads."
+    />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="stylesheet" href="/assets/css/app.css" />
+    <script type="module" src="/assets/js/main.js"></script>
   </head>
   <body>
-    <h1>It works 🎉</h1>
-    <p>This site is deployed using Cloudflare Pages.</p>
-    <p><a href="/about/">About</a></p>
+    <header class="site-header">
+      <a class="brand" href="/">
+        <img src="/assets/favicon.svg" alt="" width="24" height="24" />
+        <span>Face Animation</span>
+      </a>
+      <nav>
+        <a href="/about/">About</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>Align faces by the eyes, then animate them</h1>
+        <p class="lead">
+          Add a set of face photos, click each person's eyes, and get a smooth
+          animation with every face scaled and rotated so the eyes stay level
+          and in the same spot. Everything happens in your browser —
+          <strong>your photos never leave this device.</strong>
+        </p>
+      </section>
+
+      <!-- Step 1: photos -->
+      <section class="step" aria-labelledby="h-photos">
+        <h2 id="h-photos"><span class="num">1</span> Add photos</h2>
+        <div
+          id="dropzone"
+          class="dropzone"
+          role="button"
+          tabindex="0"
+          aria-label="Add photos: click to choose files or drop images here"
+        >
+          <p><strong>Click to choose photos</strong> or drop them here</p>
+          <p class="muted small">JPEG, PNG, HEIC, WebP… — they stay on your device</p>
+        </div>
+        <input id="file-input" type="file" accept="image/*" multiple hidden />
+
+        <p id="empty-hint" class="muted small">No photos yet.</p>
+        <div id="photo-strip" class="photo-strip" aria-live="polite"></div>
+      </section>
+
+      <!-- Step 2: mark eyes -->
+      <section id="mark-section" class="step" aria-labelledby="h-mark" hidden>
+        <h2 id="h-mark"><span class="num">2</span> Mark the eyes</h2>
+        <p id="mark-status" class="status" aria-live="polite"></p>
+        <div class="mark-wrap">
+          <canvas id="mark-canvas" class="mark-canvas" width="640" height="460"></canvas>
+        </div>
+        <div class="controls">
+          <button id="btn-prev" type="button" class="btn">← Previous</button>
+          <button id="btn-next" type="button" class="btn">Next →</button>
+          <button id="btn-reset-marks" type="button" class="btn ghost">Reset this photo</button>
+          <span id="mark-progress" class="muted small"></span>
+        </div>
+      </section>
+
+      <!-- Step 3: settings -->
+      <section class="step" aria-labelledby="h-settings">
+        <h2 id="h-settings"><span class="num">3</span> Settings</h2>
+        <div class="settings-grid">
+          <label>
+            Frame shape
+            <select id="opt-size">
+              <option value="square" selected>Square (720×720)</option>
+              <option value="portrait">Portrait (720×960)</option>
+              <option value="landscape">Landscape (960×720)</option>
+            </select>
+          </label>
+          <label>
+            Eye line height <span id="opt-eyey-val" class="val"></span>
+            <input id="opt-eyey" type="range" min="20" max="70" value="42" />
+          </label>
+          <label>
+            Eye spacing <span id="opt-gap-val" class="val"></span>
+            <input id="opt-gap" type="range" min="15" max="55" value="34" />
+          </label>
+          <label>
+            Background
+            <select id="opt-bg">
+              <option value="#000000" selected>Black</option>
+              <option value="#ffffff">White</option>
+              <option value="#111827">Charcoal</option>
+              <option value="transparent">Transparent</option>
+            </select>
+          </label>
+          <label>
+            Speed <span id="opt-fps-val" class="val"></span>
+            <input id="opt-fps" type="range" min="1" max="24" value="6" />
+          </label>
+          <label>
+            Export loops <span id="opt-loops-val" class="val"></span>
+            <input id="opt-loops" type="range" min="1" max="10" value="3" />
+          </label>
+        </div>
+      </section>
+
+      <!-- Step 4: preview -->
+      <section class="step" aria-labelledby="h-preview">
+        <h2 id="h-preview"><span class="num">4</span> Preview</h2>
+        <p id="empty-preview" class="muted">
+          Mark the eyes on at least one photo to see the aligned animation here.
+        </p>
+        <div class="preview-wrap">
+          <canvas id="preview-canvas" class="preview-canvas" width="720" height="720" hidden></canvas>
+        </div>
+        <div class="controls">
+          <button id="btn-play" type="button" class="btn">▶ Play</button>
+          <input id="frame-scrub" type="range" min="0" max="0" value="0" class="scrub" aria-label="Scrub frames" />
+          <span id="frame-label" class="muted small"></span>
+        </div>
+      </section>
+
+      <!-- Step 5: export -->
+      <section id="export-section" class="step" aria-labelledby="h-export" hidden>
+        <h2 id="h-export"><span class="num">5</span> Export</h2>
+        <p class="muted small">
+          Records the animation to a video file using your browser's built-in
+          encoder (MP4 on Safari, WebM on Chrome/Edge).
+        </p>
+        <div class="controls">
+          <button id="btn-export" type="button" class="btn primary">● Record &amp; download</button>
+          <span id="export-status" class="muted small" aria-live="polite"></span>
+        </div>
+        <div id="download-area" class="download-area"></div>
+        <p id="export-note" class="muted small"></p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p class="muted small">
+        Runs entirely in your browser. No photos are uploaded.
+        <a href="/about/">How it works</a>
+      </p>
+    </footer>
+
+    <!-- Magnifier loupe, positioned via JS -->
+    <canvas id="loupe" class="loupe" width="120" height="120" hidden></canvas>
   </body>
 </html>

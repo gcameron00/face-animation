@@ -1,15 +1,106 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <title>About</title>
-    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <title>About — Face Animation</title>
+    <meta
+      name="description"
+      content="How Face Animation aligns faces by the eyes, how your privacy is protected, and which browsers are supported."
+    />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="stylesheet" href="/assets/css/app.css" />
   </head>
   <body>
-    <h1>About</h1>
-    <p><a href="/">Back home</a></p>
+    <header class="site-header">
+      <a class="brand" href="/">
+        <img src="/assets/favicon.svg" alt="" width="24" height="24" />
+        <span>Face Animation</span>
+      </a>
+      <nav>
+        <a href="/">Home</a>
+      </nav>
+    </header>
+
+    <main class="prose">
+      <h1>About</h1>
+      <p>
+        <strong>Face Animation</strong> turns a set of face photos into a smooth
+        animation, with every face scaled and rotated so the eyes stay level and
+        in the same position from frame to frame. It's the effect behind
+        "aging timelapse" and "one photo a day" videos.
+      </p>
+
+      <h2>Your privacy comes first</h2>
+      <p>
+        Everything runs inside your browser using plain HTML, CSS, and
+        JavaScript. Your photos are <strong>never uploaded</strong> — there is no
+        server, no account, and no analytics. When you close the tab, the images
+        are gone from memory. This makes it safe to use with personal or family
+        photos.
+      </p>
+
+      <h2>How it works</h2>
+      <ol>
+        <li><strong>Add photos.</strong> Pick or drag in a set of face photos.</li>
+        <li>
+          <strong>Mark the eyes.</strong> On each photo you click the left eye
+          then the right eye. A magnifier appears so you can be precise. Manual
+          marking needs no third-party face-detection library and is reliably
+          accurate for a curated set of photos.
+        </li>
+        <li>
+          <strong>Alignment math.</strong> From the two eye points we compute a
+          rotation (to make the eye line horizontal), a uniform scale (so every
+          face shares the same inter-eye distance), and a translation (so the
+          midpoint between the eyes lands on the same spot). Each photo is then
+          drawn onto a fixed-size frame with the Canvas 2D API.
+        </li>
+        <li>
+          <strong>Preview.</strong> The aligned frames are cycled with
+          <code>requestAnimationFrame</code>. You can change the speed, scrub
+          through frames, and reorder or remove photos.
+        </li>
+        <li>
+          <strong>Export.</strong> The browser's built-in
+          <code>MediaRecorder</code> captures the animation to a video file —
+          MP4/H.264 on Safari, WebM on Chrome and Edge. No encoder library is
+          bundled.
+        </li>
+      </ol>
+
+      <h2>No third-party code</h2>
+      <p>
+        There are no frameworks and no runtime dependencies. All alignment,
+        animation, and video encoding use APIs built into the browser. This
+        keeps the site tiny, fast, and easy to audit.
+      </p>
+
+      <h2>Browser support</h2>
+      <ul>
+        <li><strong>Safari</strong> (macOS 14.1+, iOS 14.5+) — full support, records MP4.</li>
+        <li><strong>Chrome / Edge</strong> (recent versions) — full support, records WebM.</li>
+        <li>
+          Older browsers can still add photos, mark eyes, and preview the
+          animation; only video export requires <code>MediaRecorder</code>.
+        </li>
+      </ul>
+
+      <h2>Tips for the best result</h2>
+      <ul>
+        <li>Use photos where both eyes are clearly visible.</li>
+        <li>Zoom with the magnifier and click the centre of each pupil.</li>
+        <li>Keep the photo order consistent (e.g. by date) for a natural flow.</li>
+        <li>Lower the speed for a slideshow feel; raise it for a morph-like effect.</li>
+      </ul>
+
+      <p><a href="/">← Back to the app</a></p>
+    </main>
+
+    <footer class="site-footer">
+      <p class="muted small">Runs entirely in your browser. No photos are uploaded.</p>
+    </footer>
   </body>
 </html>
