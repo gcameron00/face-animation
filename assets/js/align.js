@@ -117,3 +117,146 @@ export function renderFrame(image, leftEye, rightEye, layout, dealAngle = 0) {
   drawAligned(ctx, image, leftEye, rightEye, layout, dealAngle);
   return canvas;
 }
+
+// ---------------------------------------------------------------------------
+// Pile of photos
+// ---------------------------------------------------------------------------
+//
+// A "pile" stacks every photo into a single frame. Each photo is aligned so
+// the eyes land on the same fixed spot, then clipped to a rectangular "print"
+// and tilted by its own deal angle *about the eye midpoint*. Because the print
+// is a bounded rectangle — not the whole source image — the ones underneath
+// peek out around the edges and the background shows through the fanned gaps,
+// just like a physical pile of prints dealt onto a table.
+//
+// Cutting a rectangle that is axis-aligned in the (levelled) output frame and
+// then rotating it is exactly the "cut a rectangle not aligned with the
+// original photo" trick from the feature request: the clip rectangle is
+// straight relative to the eyes, so relative to the source pixels it is
+// rotated.
+
+/**
+ * Styling + geometry for the individual prints in a pile.
+ * @typedef {Object} PrintOptions
+ * @property {number} printFrac  Print size as a fraction of the frame (0..1).
+ * @property {boolean} border    Draw a white photo-print border around each.
+ * @property {string} borderColor CSS colour for the print border.
+ * @property {boolean} shadow     Cast a soft drop shadow behind each print.
+ */
+
+/** @type {PrintOptions} */
+export const DEFAULT_PRINT = {
+  printFrac: 0.72,
+  border: true,
+  borderColor: "#ffffff",
+  shadow: true,
+};
+
+/**
+ * Compute the print rectangle in the levelled output frame (before the deal
+ * rotation), expressed relative to the eye midpoint at the origin.
+ *
+ * @param {Layout} layout
+ * @param {number} printFrac
+ * @returns {{x:number, y:number, w:number, h:number}}
+ */
+function printRect(layout, printFrac) {
+  const w = layout.width * printFrac;
+  const h = layout.height * printFrac;
+  // Place the eyes at the same relative height inside the print as they sit in
+  // the full frame, so the face is framed naturally. The eyes are at the
+  // origin; the print centre therefore sits (0.5 - eyeY) * h below them.
+  const centreDy = (0.5 - layout.eyeY) * h;
+  return { x: -w / 2, y: centreDy - h / 2, w, h };
+}
+
+/**
+ * Draw a single eye-aligned "print" onto an existing context, without clearing
+ * or painting the background — so prints can be stacked into a pile.
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {{image:CanvasImageSource, leftEye:{x:number,y:number},
+ *          rightEye:{x:number,y:number}, dealAngle?:number}} print
+ * @param {Layout} layout
+ * @param {Partial<PrintOptions>} [opts]
+ */
+export function drawPrint(ctx, print, layout, opts = {}) {
+  const o = { ...DEFAULT_PRINT, ...opts };
+  const { image, leftEye, rightEye, dealAngle = 0 } = print;
+  const { angle, scale, midpoint, target } = computeTransform(
+    leftEye,
+    rightEye,
+    layout
+  );
+  const rect = printRect(layout, o.printFrac);
+  const border = Math.max(2, layout.width * 0.006);
+
+  ctx.save();
+  // Pivot on the eye midpoint so the eyes stay fixed no matter the tilt.
+  ctx.translate(target.x, target.y);
+  ctx.rotate(dealAngle);
+
+  // A white backing slightly larger than the photo gives each print a border,
+  // and (optionally) casts a soft shadow so the stack reads with depth.
+  if (o.border) {
+    ctx.save();
+    if (o.shadow) {
+      ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+      ctx.shadowBlur = layout.width * 0.02;
+      ctx.shadowOffsetX = layout.width * 0.004;
+      ctx.shadowOffsetY = layout.width * 0.006;
+    }
+    ctx.fillStyle = o.borderColor;
+    ctx.fillRect(
+      rect.x - border,
+      rect.y - border,
+      rect.w + border * 2,
+      rect.h + border * 2
+    );
+    ctx.restore();
+  }
+
+  // Clip to the print rectangle, then draw the eye-aligned photo inside it.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(rect.x, rect.y, rect.w, rect.h);
+  ctx.clip();
+  ctx.rotate(-angle);
+  ctx.scale(scale, scale);
+  ctx.translate(-midpoint.x, -midpoint.y);
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(image, 0, 0);
+  ctx.restore();
+
+  ctx.restore();
+}
+
+/**
+ * Render one frame of a pile: the background plus every print stacked, with the
+ * highlighted photo drawn last so it sits on top of the pile.
+ *
+ * @param {Array<{image:CanvasImageSource, leftEye:{x:number,y:number},
+ *          rightEye:{x:number,y:number}, dealAngle?:number}>} prints
+ * @param {number} topIndex  Index drawn last (on top); -1 for natural order.
+ * @param {Layout} layout
+ * @param {Partial<PrintOptions>} [opts]
+ * @returns {HTMLCanvasElement}
+ */
+export function renderPileFrame(prints, topIndex, layout, opts = {}) {
+  const canvas = document.createElement("canvas");
+  canvas.width = layout.width;
+  canvas.height = layout.height;
+  const ctx = canvas.getContext("2d");
+
+  ctx.clearRect(0, 0, layout.width, layout.height);
+  if (layout.background && layout.background !== "transparent") {
+    ctx.fillStyle = layout.background;
+    ctx.fillRect(0, 0, layout.width, layout.height);
+  }
+
+  const order = prints.map((_, i) => i).filter((i) => i !== topIndex);
+  if (topIndex >= 0 && topIndex < prints.length) order.push(topIndex);
+  order.forEach((i) => drawPrint(ctx, prints[i], layout, opts));
+
+  return canvas;
+}

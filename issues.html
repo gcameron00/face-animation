@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Pile of photos — implementation notes &amp; known issues</title>
+    <meta
+      name="description"
+      content="How the pile-of-photos effect is built with the Canvas 2D API, and the known limitations of the rotated-cutout approach."
+    />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/assets/css/styles.css" />
+    <link rel="stylesheet" href="/assets/css/app.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/">
+        <img src="/assets/favicon.svg" alt="" width="24" height="24" />
+        <span>Face Animation</span>
+      </a>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/about/">About</a>
+      </nav>
+    </header>
+
+    <main class="prose">
+      <h1>Pile of photos — implementation notes &amp; known issues</h1>
+      <p>
+        This is an unlinked page documenting how the
+        <strong>pile-of-photos</strong> effect works and the technical
+        trade-offs behind it. It is not part of the site navigation.
+      </p>
+
+      <h2>The goal</h2>
+      <p>
+        Lay several photos on top of each other so the <strong>eyes line
+        up</strong> across all of them, but each photo sits at a
+        <strong>different angle</strong>. The result is a stack of tilted prints
+        on a background, with the background showing through the fanned gaps and
+        around the edges — like a pile of physical prints dealt onto a table.
+      </p>
+
+      <h2>Is it technically possible? Yes.</h2>
+      <p>
+        It is fully achievable in the browser with the Canvas 2D API — no
+        server, no third-party code, consistent with the rest of the site. The
+        key realisation, exactly as suggested in the feature request, is that
+        you do <em>not</em> need to physically re-cut each source photo. You can
+        <strong>fake the rotated cutout</strong> by clipping to a rectangle that
+        is axis-aligned in the output frame and then rotating the whole thing.
+        Relative to the original photo's pixel grid, that clip rectangle is
+        rotated — which is precisely the desired "cut a rectangle not aligned
+        with the original photo" effect.
+      </p>
+
+      <h2>How each print is drawn</h2>
+      <ol>
+        <li>
+          <strong>Align by the eyes.</strong> From the two marked eye points we
+          compute the usual similarity transform (rotate + uniform scale +
+          translate) that puts the eye midpoint on a fixed spot with a fixed
+          inter-eye distance.
+        </li>
+        <li>
+          <strong>Pivot on the eyes.</strong> We translate the canvas origin to
+          that fixed eye spot and rotate by the photo's own <em>deal
+          angle</em>. Because the pivot is the eye midpoint, the eyes stay
+          locked in place no matter how far the print is tilted.
+        </li>
+        <li>
+          <strong>Clip to a print rectangle.</strong> A rectangle a little
+          smaller than the frame (a fraction of its size) is used as a clip
+          region, positioned so the face sits naturally inside it. Only the
+          pixels inside this rotated rectangle are drawn, so the photo becomes a
+          bounded "print" rather than filling the whole frame.
+        </li>
+        <li>
+          <strong>Draw the aligned photo inside the clip.</strong> The source
+          image is drawn with the alignment transform, but only what falls
+          inside the print rectangle survives.
+        </li>
+        <li>
+          <strong>Border &amp; shadow.</strong> A thin white border and a soft
+          drop shadow are painted behind each print so overlapping prints stay
+          distinguishable and read with a little depth.
+        </li>
+      </ol>
+      <p>
+        Every frame paints the background once and then stacks all the prints,
+        bringing a different photo to the top each frame, so the whole pile is
+        visible throughout the animation. The relevant code lives in
+        <code>drawPrint</code> and <code>renderPileFrame</code> in
+        <code>assets/js/align.js</code>.
+      </p>
+
+      <h2>Known limitations &amp; trade-offs</h2>
+      <ul>
+        <li>
+          <strong>Prints overlap heavily.</strong> Because the eyes are locked
+          to the same point, the prints coincide almost entirely — only the
+          fanned corners and edges of the ones underneath peek out. This is
+          inherent to "eyes line up" and is what produces the pile look; raising
+          the <em>Pile tilt</em> spreads the fan wider so more of each print
+          shows.
+        </li>
+        <li>
+          <strong>The print may include the photo's own background.</strong> The
+          cutout is a fixed rectangle around the face, so a tightly-cropped
+          source photo can leave part of the print showing its original
+          surroundings rather than a clean edge. There is no per-photo
+          background removal (that would need a segmentation model, which the
+          site deliberately avoids to keep everything local and dependency-free).
+        </li>
+        <li>
+          <strong>Print size is a global fraction of the frame</strong>, not
+          tuned per photo. Faces framed very differently across photos are not
+          individually re-cropped. A future enhancement could size each print
+          from its inter-eye distance.
+        </li>
+        <li>
+          <strong>Shadows are per-print, not true occlusion.</strong> Each
+          print casts its own soft shadow; the renderer does not compute real
+          contact shadows between specific overlapping prints.
+        </li>
+        <li>
+          <strong>Eyes must be marked</strong> on a photo for it to appear in
+          the pile, the same as for the normal animation.
+        </li>
+      </ul>
+
+      <p><a href="/">← Back to the app</a></p>
+    </main>
+
+    <footer class="site-footer">
+      <p class="muted small">
+        Runs entirely in your browser. No photos are uploaded.
+        <a href="/about/">How it works</a>
+      </p>
+    </footer>
+  </body>
+</html>
