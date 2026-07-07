@@ -272,6 +272,25 @@ main {
   color: var(--color-muted);
 }
 
+/* Checkbox-style settings (e.g. "Pile of photos") sit inline rather than
+   stacking label-over-control like the sliders. */
+.settings-grid label.check {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.settings-grid label.check input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.settings-grid .hint {
+  flex-basis: 100%;
+  font-weight: 400;
+}
+
 /* Export */
 .download-area {
   margin-top: 0.9rem;

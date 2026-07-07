@@ -66,8 +66,12 @@ export function computeTransform(leftEye, rightEye, layout) {
  * @param {{x:number,y:number}} leftEye
  * @param {{x:number,y:number}} rightEye
  * @param {Layout} layout
+ * @param {number} [dealAngle=0]  Extra rotation in radians applied about the
+ *   eye midpoint. Zero keeps the eyes perfectly level (the default alignment);
+ *   a non-zero value tilts the whole photo like a physical print dealt onto a
+ *   pile, so more background shows around its edges.
  */
-export function drawAligned(ctx, image, leftEye, rightEye, layout) {
+export function drawAligned(ctx, image, leftEye, rightEye, layout, dealAngle = 0) {
   const { angle, scale, midpoint, target } = computeTransform(
     leftEye,
     rightEye,
@@ -82,9 +86,11 @@ export function drawAligned(ctx, image, leftEye, rightEye, layout) {
   }
 
   // Order matters: canvas applies these as post-multiplications, so the
-  // last translate is the first thing that happens to a point.
+  // last translate is the first thing that happens to a point. The deal
+  // angle rotates the already-levelled photo about the target eye midpoint:
+  // Rot(dealAngle) * Rot(-angle) = Rot(dealAngle - angle).
   ctx.translate(target.x, target.y);
-  ctx.rotate(-angle);
+  ctx.rotate(dealAngle - angle);
   ctx.scale(scale, scale);
   ctx.translate(-midpoint.x, -midpoint.y);
 
@@ -100,13 +106,14 @@ export function drawAligned(ctx, image, leftEye, rightEye, layout) {
  * @param {{x:number,y:number}} leftEye
  * @param {{x:number,y:number}} rightEye
  * @param {Layout} layout
+ * @param {number} [dealAngle=0]  See {@link drawAligned}.
  * @returns {HTMLCanvasElement}
  */
-export function renderFrame(image, leftEye, rightEye, layout) {
+export function renderFrame(image, leftEye, rightEye, layout, dealAngle = 0) {
   const canvas = document.createElement("canvas");
   canvas.width = layout.width;
   canvas.height = layout.height;
   const ctx = canvas.getContext("2d");
-  drawAligned(ctx, image, leftEye, rightEye, layout);
+  drawAligned(ctx, image, leftEye, rightEye, layout, dealAngle);
   return canvas;
 }
