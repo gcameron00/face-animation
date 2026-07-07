@@ -17,6 +17,9 @@ import { canRecord, recordAnimation } from "./recorder.js";
  * @property {string} url               Object URL (revoked on remove).
  * @property {{x:number,y:number}|null} leftEye   In image pixel coords.
  * @property {{x:number,y:number}|null} rightEye
+ * @property {number} dealSeed  Stable value in [-1, 1] giving this photo its
+ *   own tilt in "pile of photos" mode. Set once, so the pile stays put while
+ *   the tilt slider only scales how far each photo leans.
  */
 
 const state = {
@@ -28,6 +31,8 @@ const state = {
   layout: { ...DEFAULT_LAYOUT },
   fps: 6,
   loops: 3,
+  pile: false,
+  tilt: 12, // max deal angle in degrees when pile mode is on
   playing: false,
   previewIndex: 0,
   lastTick: 0,
@@ -50,6 +55,7 @@ function cacheEls() {
     "btn-prev", "btn-next", "btn-reset-marks", "mark-progress",
     "opt-size", "opt-eyey", "opt-eyey-val", "opt-gap", "opt-gap-val",
     "opt-bg", "opt-fps", "opt-fps-val", "opt-loops", "opt-loops-val",
+    "opt-pile", "opt-tilt", "opt-tilt-val",
     "preview-section", "preview-canvas", "btn-play", "frame-scrub",
     "frame-label", "empty-preview",
     "export-section", "btn-export", "export-status", "download-area",
@@ -77,6 +83,7 @@ function loadFiles(fileList) {
         url,
         leftEye: null,
         rightEye: null,
+        dealSeed: Math.random() * 2 - 1,
       });
       loaded += 1;
       if (loaded === files.length) {
@@ -351,11 +358,15 @@ function readSettings() {
   state.layout.background = els["opt-bg"].value;
   state.fps = Number(els["opt-fps"].value);
   state.loops = Number(els["opt-loops"].value);
+  state.pile = els["opt-pile"].checked;
+  state.tilt = Number(els["opt-tilt"].value);
 
   els["opt-eyey-val"].textContent = `${els["opt-eyey"].value}%`;
   els["opt-gap-val"].textContent = `${els["opt-gap"].value}%`;
   els["opt-fps-val"].textContent = `${els["opt-fps"].value} fps`;
   els["opt-loops-val"].textContent = `${els["opt-loops"].value}×`;
+  els["opt-tilt-val"].textContent = `±${els["opt-tilt"].value}°`;
+  els["opt-tilt"].disabled = !state.pile;
 }
 
 // ---------------------------------------------------------------------------
@@ -366,9 +377,14 @@ function markedPhotos() {
   return state.photos.filter((p) => p.leftEye && p.rightEye);
 }
 
+function dealAngleFor(photo) {
+  if (!state.pile) return 0;
+  return photo.dealSeed * state.tilt * (Math.PI / 180);
+}
+
 function rebuildFrames() {
   state.frames = markedPhotos().map((p) =>
-    renderFrame(p.img, p.leftEye, p.rightEye, state.layout)
+    renderFrame(p.img, p.leftEye, p.rightEye, state.layout, dealAngleFor(p))
   );
   if (state.previewIndex >= state.frames.length) state.previewIndex = 0;
 
@@ -552,7 +568,10 @@ function wire() {
   });
 
   // Settings
-  ["opt-size", "opt-eyey", "opt-gap", "opt-bg", "opt-fps", "opt-loops"].forEach(
+  [
+    "opt-size", "opt-eyey", "opt-gap", "opt-bg", "opt-fps", "opt-loops",
+    "opt-pile", "opt-tilt",
+  ].forEach(
     (id) =>
       els[id].addEventListener("input", () => {
         readSettings();
