@@ -33,6 +33,7 @@ const state = {
   loops: 3,
   pile: false,
   tilt: 12, // max deal angle in degrees when pile mode is on
+  levelEyes: true, // in pile mode, keep faces level while frames tilt
   playing: false,
   previewIndex: 0,
   lastTick: 0,
@@ -55,7 +56,7 @@ function cacheEls() {
     "btn-prev", "btn-next", "btn-reset-marks", "mark-progress",
     "opt-size", "opt-eyey", "opt-eyey-val", "opt-gap", "opt-gap-val",
     "opt-bg", "opt-fps", "opt-fps-val", "opt-loops", "opt-loops-val",
-    "opt-pile", "opt-tilt", "opt-tilt-val",
+    "opt-pile", "opt-tilt", "opt-tilt-val", "opt-level-eyes",
     "preview-section", "preview-canvas", "btn-play", "frame-scrub",
     "frame-label", "empty-preview",
     "export-section", "btn-export", "export-status", "download-area",
@@ -360,6 +361,7 @@ function readSettings() {
   state.loops = Number(els["opt-loops"].value);
   state.pile = els["opt-pile"].checked;
   state.tilt = Number(els["opt-tilt"].value);
+  state.levelEyes = els["opt-level-eyes"].checked;
 
   els["opt-eyey-val"].textContent = `${els["opt-eyey"].value}%`;
   els["opt-gap-val"].textContent = `${els["opt-gap"].value}%`;
@@ -367,6 +369,7 @@ function readSettings() {
   els["opt-loops-val"].textContent = `${els["opt-loops"].value}×`;
   els["opt-tilt-val"].textContent = `±${els["opt-tilt"].value}°`;
   els["opt-tilt"].disabled = !state.pile;
+  els["opt-level-eyes"].disabled = !state.pile;
 }
 
 // ---------------------------------------------------------------------------
@@ -394,7 +397,7 @@ function rebuildFrames() {
       dealAngle: dealAngleFor(p),
     }));
     state.frames = photos.map((_, top) =>
-      renderPileFrame(prints, top, state.layout)
+      renderPileFrame(prints, top, state.layout, { levelEyes: state.levelEyes })
     );
   } else {
     state.frames = photos.map((p) =>
@@ -585,7 +588,7 @@ function wire() {
   // Settings
   [
     "opt-size", "opt-eyey", "opt-gap", "opt-bg", "opt-fps", "opt-loops",
-    "opt-pile", "opt-tilt",
+    "opt-pile", "opt-tilt", "opt-level-eyes",
   ].forEach(
     (id) =>
       els[id].addEventListener("input", () => {

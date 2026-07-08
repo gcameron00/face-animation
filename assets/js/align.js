@@ -142,6 +142,11 @@ export function renderFrame(image, leftEye, rightEye, layout, dealAngle = 0) {
  * @property {boolean} border    Draw a white photo-print border around each.
  * @property {string} borderColor CSS colour for the print border.
  * @property {boolean} shadow     Cast a soft drop shadow behind each print.
+ * @property {boolean} levelEyes  Keep the face inside each print level. When
+ *   true the print's rectangular frame is tilted by the deal angle but the
+ *   face drawn inside stays horizontal, so every set of eyes lines up in a
+ *   straight row across a fanned-out pile. When false the whole print — border
+ *   and face together — tilts as one rigid unit (the classic dealt-photo look).
  */
 
 /** @type {PrintOptions} */
@@ -150,6 +155,7 @@ export const DEFAULT_PRINT = {
   border: true,
   borderColor: "#ffffff",
   shadow: true,
+  levelEyes: true,
 };
 
 /**
@@ -221,6 +227,18 @@ export function drawPrint(ctx, print, layout, opts = {}) {
   ctx.beginPath();
   ctx.rect(rect.x, rect.y, rect.w, rect.h);
   ctx.clip();
+  // The clip region is now locked into device space, so the content transform
+  // no longer has to share the print's tilt. In "level eyes" mode we drop the
+  // deal angle from the content transform entirely: reset to identity and
+  // rebuild translate(target) → rotate(-angle) → scale → translate(-midpoint),
+  // exactly the non-pile eye-levelling transform. The print's rectangle stays
+  // tilted (drawn above) but the face inside comes out horizontal. When the
+  // flag is off we keep building on the tilted transform, so border and face
+  // rotate together as one rigid print.
+  if (o.levelEyes) {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.translate(target.x, target.y);
+  }
   ctx.rotate(-angle);
   ctx.scale(scale, scale);
   ctx.translate(-midpoint.x, -midpoint.y);
